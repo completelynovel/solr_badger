@@ -69,7 +69,7 @@ module SolrToolbox
           
           url << "&facet.field=#{facet[:field].to_s}"
           url << "&f.#{facet[:field].to_s}.facet.limit=#{facet[:limit].to_s}"
-          url << "&f.#{facet[:field].to_s}.facet.mincout=#{facet[:mincount].to_s}"
+          url << "&f.#{facet[:field].to_s}.facet.mincount=#{facet[:mincount].to_s}"
           url << "&f.#{facet[:field].to_s}.facet.sort=#{facet[:sort].to_s}"
         end if options[:facet_fields].present? 
       end
