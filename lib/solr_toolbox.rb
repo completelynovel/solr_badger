@@ -169,28 +169,28 @@ module SolrToolbox
     end
     
     def self.update_solr_index(model, options = {})
-      options[:limit] ||= 0
+      options[:limit] ||= nil
       
-      entries = options[:limit] == 0 ? model.all : model.all(:limit => options[:limit]) 
+      RAILS_DEFAULT_LOGGER.info "Update Solr index for the #{model.to_s} model..."
       
-      RAILS_DEFAULT_LOGGER.info "Update Solr index for the #{model.to_s} model (#{entries.size} entries)..."
-      
-      entries.each do |entry|
-        RAILS_DEFAULT_LOGGER.info "Update entry "+ entry.id.to_s
-        entry.update_solr_entry(:force => true)
+      model.all(options).in_groups_of(150, false).each do |group|
+        group.each do |entry|
+          RAILS_DEFAULT_LOGGER.info "Update entry "+ entry.id.to_s
+          entry.update_solr_entry(:force => true)
+        end
       end
     end
     
     def self.create_solr_index(model, options = {})
-      options[:limit] ||= 0
+      options[:limit] ||= nil
       
-      entries = options[:limit] == 0 ? model.all : model.all(:limit => options[:limit]) 
+      RAILS_DEFAULT_LOGGER.info "Create Solr index for the #{model.to_s} model..."
       
-      RAILS_DEFAULT_LOGGER.info "Create Solr index for the #{model.to_s} model (#{entries.size} entries)..."
-      
-      entries.each do |entry|
-        RAILS_DEFAULT_LOGGER.info "Create entry "+ entry.id.to_s
-        entry.create_solr_entry
+      model.all(options).in_groups_of(150, false).each do |group|
+        group.each do |entry|
+          RAILS_DEFAULT_LOGGER.info "Create entry "+ entry.id.to_s
+          entry.create_solr_entry
+        end
       end
     end
     
