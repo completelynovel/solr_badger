@@ -1,5 +1,3 @@
-require 'logger'
-
 module SolrToolbox
   
   class Search
@@ -16,6 +14,7 @@ module SolrToolbox
     
     def self.query(query, options = {})
       require 'open-uri'
+      require 'json'
       
       options[:extra_query]   ||= ""
       options[:page]          ||= 1
@@ -36,8 +35,11 @@ module SolrToolbox
       allow_fields_in_query = options.delete(:allow_fields_in_query) || false
       query = SolrToolbox::Tools.encode_query(query, allow_fields_in_query)
       
+      # Init url 
+      url = []
+      
       # Query Solr to get the results according to the current page
-      url  = SolrToolbox::Tools.core_url(options[:core][0], :select => true)
+      url << SolrToolbox::Tools.core_url(options[:core][0], :select => true)
       
       if options[:extra_query].present?
         url << URI.encode("?q={!boost b=\"#{options[:extra_query]}\" v=$qq}")
@@ -46,6 +48,7 @@ module SolrToolbox
         url << "?q=#{query}" 
       end
       
+      url << "&wt=json"
       url << "&qt=dismax" if options[:dismax] && !SolrToolbox::Tools.empty_query?(query)
       url << "&rows=#{options[:per_page].to_s}" 
       url << "&start=#{options[:solr_page].to_s}" 
@@ -77,22 +80,25 @@ module SolrToolbox
       url << options[:extra_url]
       url << SOLR_CONFIG["extra_url"] if SOLR_CONFIG["extra_url"].present?
       
-      # Search url
-      RAILS_DEFAULT_LOGGER.info "Search on Solr with : "+ url
-      xml = open(url) { |f| Hpricot.XML(f) }
+      # Create string from url
+      url = url.join("")
       
-      # Get the informations of the XML fetched by solr 
-      solr_ids = xml.search("//str[@name='id']").collect { |entry| entry.inner_html }
+      # Search url
+      SOLR_LOG.info "Search on Solr with : #{url}"
+      json = JSON.parse(open(url).collect { |l| l }.join(""))
+      
+      # Get the informations out of the JSON fetched by solr 
+      solr_ids = json["response"]["docs"].to_hash.collect{|doc| doc[1]["id"]}
       ids      = solr_ids.collect { |id| id.split(":")[1] }
-      found    = xml.search("//result").collect { |r| r.attributes["numFound"] }.first
       
       # Return list of ids and results founds 
       search = { 
         :solr_ids => solr_ids,
         :ids => ids,
-        :found => found, 
+        :found => json["response"]["numFound"], 
         :page => options[:page], 
-        :per_page => options[:per_page]
+        :per_page => options[:per_page],
+        :time => json["responseHeader"]["QTime"]
       }
       
       # Search for results
@@ -111,7 +117,8 @@ module SolrToolbox
       end
       
       search[:req]    = url if options[:return].include?(:req)
-      search[:facets] = SolrToolbox::Tools.xml_to_hash(xml.search("//lst[@name='facet_counts']/")) if options[:return].include?(:facets)
+      search[:facets] = SolrToolbox::Tools.facets_to_hash(json["facet_counts"]) if options[:return].include?(:facets)
+      search[:json]   = json if options[:return].include?(:json)
       
       search
     end
@@ -169,26 +176,26 @@ module SolrToolbox
     end
     
     def self.update_solr_index(model, options = {})
-      options[:limit] ||= nil
+      options[:batch_size] ||= 150
       
-      RAILS_DEFAULT_LOGGER.info "Update Solr index for the #{model.to_s} model..."
+      SOLR_LOG.info "Update Solr index for the #{model.to_s} model..."
       
-      model.all(options).in_groups_of(150, false).each do |group|
+      model.find_in_batches(options) do |group|
         group.each do |entry|
-          RAILS_DEFAULT_LOGGER.info "Update entry "+ entry.id.to_s
+          SOLR_LOG.info "Update entry #{entry.id.to_s}"
           entry.update_solr_entry(:force => true)
         end
       end
     end
     
     def self.create_solr_index(model, options = {})
-      options[:limit] ||= nil
+      options[:batch_size] ||= 150
       
-      RAILS_DEFAULT_LOGGER.info "Create Solr index for the #{model.to_s} model..."
+      SOLR_LOG.info "Create Solr index for the #{model.to_s} model..."
       
-      model.all(options).in_groups_of(150, false).each do |group|
+      model.find_in_batches(options) do |group|
         group.each do |entry|
-          RAILS_DEFAULT_LOGGER.info "Create entry "+ entry.id.to_s
+          SOLR_LOG.info "Create entry #{entry.id.to_s}"
           entry.create_solr_entry
         end
       end
@@ -238,13 +245,23 @@ module SolrToolbox
     def self.keep_ids_order(ids)
       ids.present? ? "FIELD(id, '"+ ids.join("', '") +"')" : ""
     end
-  
-    def self.xml_to_hash(xml)
-      h = {}
-      xml.each do |node|
-        node.is_a?(Hpricot::Elem) ? h[node.attributes["name"]] = SolrToolbox::Tools.xml_to_hash(node.search("/")) : h = node
+    
+    def self.facets_to_hash(json)
+      #if json["facet_queries"].present?
+      #  json["facet_queries"] = json["facet_queries"].to_hash
+      #end
+      
+      if json["facet_fields"].present?
+        json["facet_fields"].each do |facet_name, facet|
+          filters = {}
+          facet.in_groups_of(2).each do |filter|
+            filters[filter[0]] = filter[1]
+          end
+          json["facet_fields"][facet_name] = filters
+        end
       end
-      h
+      
+      json
     end
     
   end
