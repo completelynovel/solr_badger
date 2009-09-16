@@ -84,8 +84,10 @@ module SolrToolbox
       url = url.join("")
       
       # Search url
-      SOLR_LOG.info "Search on Solr with : #{url}"
       json = JSON.parse(open(url).collect { |l| l }.join(""))
+      
+      # Log search
+      SOLR_LOG.info "#{Time.now} - Solr Search, time : #{json["responseHeader"]["QTime"]}, url : #{url}"
       
       # Get the informations out of the JSON fetched by solr 
       solr_ids = json["response"]["docs"].to_hash.collect{|doc| doc[1]["id"]}
@@ -178,11 +180,11 @@ module SolrToolbox
     def self.update_solr_index(model, options = {})
       options[:batch_size] ||= 150
       
-      SOLR_LOG.info "Update Solr index for the #{model.to_s} model..."
+      SOLR_LOG.info "#{Time.now} - Update Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
         group.each do |entry|
-          SOLR_LOG.info "Update entry #{entry.id.to_s}"
+          SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.update_solr_entry(:force => true)
         end
       end
@@ -191,11 +193,11 @@ module SolrToolbox
     def self.create_solr_index(model, options = {})
       options[:batch_size] ||= 150
       
-      SOLR_LOG.info "Create Solr index for the #{model.to_s} model..."
+      SOLR_LOG.info "#{Time.now} - Create Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
         group.each do |entry|
-          SOLR_LOG.info "Create entry #{entry.id.to_s}"
+          SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.create_solr_entry
         end
       end

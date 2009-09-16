@@ -66,7 +66,8 @@ module IndexOnSolr
         end
       end
     
-      def create_solr_entry         
+      def create_solr_entry      
+        SOLR_LOG.info "#{Time.now} - Create Solr Entry #{self.id} for model #{self.class.to_s}"   
         conn = self.class.solr_connection
         conn.add(self.solr_entry_fields)
       end
@@ -75,6 +76,7 @@ module IndexOnSolr
         options[:force] ||= false
         
         if self.need_solr_update || options[:force]
+          SOLR_LOG.info "#{Time.now} - Update Solr Entry #{self.id} for model #{self.class.to_s}"   
           conn = self.class.solr_connection
           conn.update(self.solr_entry_fields)
           self.need_solr_update = false
@@ -111,6 +113,7 @@ module IndexOnSolr
       end
       
       def destroy_solr_entry
+        SOLR_LOG.info "#{Time.now} - Destroy Solr Entry #{self.id} for model #{self.class.to_s}"   
         conn = self.class.solr_connection
         conn.delete(self.solr_id)
       end
