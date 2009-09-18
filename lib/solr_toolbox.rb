@@ -114,7 +114,7 @@ module SolrToolbox
           search[:results] = ids.present? ? options[:model].constantize.all(results_options) : []
         # One different model per id
         else
-          search[:results] = solr_ids.present? ? solr_ids.collect { |id| id.split(":")[0].constantize.find(id.split(":")[1]) } : []
+          search[:results] = solr_ids.present? ? solr_ids.collect { |id| id.split(":")[0].constantize.find_by_id(id.split(":")[1]) } : []
         end
       end
       
@@ -209,7 +209,7 @@ module SolrToolbox
       options[:core] ||= ""
       
       ids = model.all(:select => "id").collect(&:id)
-      useless_ids = (ids.first..ids.last).to_a - ids
+      useless_ids = (1..ids.last).to_a - ids
 
       if options[:fix]
         useless_ids.each do |id|
