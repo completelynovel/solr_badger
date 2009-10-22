@@ -93,7 +93,7 @@ module IndexOnSolr
           :model => self.class.to_s
         }
       
-        default_fields[:live_b] = self.live if self.class.solr_use_live_field?
+        default_fields[:live_b] = self.live? if self.class.solr_use_live_field?
       
         if self.class.solr_options.present?
           self.class.solr_options.each do |field, value|
@@ -166,6 +166,11 @@ module IndexOnSolr
       
       def update_solr_index(options = {})
         SolrToolbox::Tools.update_solr_index(self, options = {})
+      end
+      
+      def verify_solr_index_integrity(options = {})
+        options[:fix] = true unless options[:fix].present?
+        SolrToolbox::Tools.verify_solr_index_integrity(self, options = {})
       end
       
     end
