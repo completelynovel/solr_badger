@@ -26,10 +26,13 @@ module IndexOnSolr
       cattr_accessor :solr_options
       self.solr_options = options
       
+      cattr_accessor :solr_conditions
+      self.solr_conditions = { :if => if_condition, :unless => unless_condition }
+      
       send("before_update", "has_fields_been_updated") 
       
-      send("after_commit_on_create", "create_solr_entry", :if => Proc.new { |l| l.trigger_create_or_update_entry?({:if => if_condition, :unless => unless_condition}) })
-      send("after_commit_on_update", "update_solr_entry", :if => Proc.new { |l| l.trigger_create_or_update_entry?({:if => if_condition, :unless => unless_condition}) })
+      send("after_commit_on_create", "create_solr_entry")
+      send("after_commit_on_update", "update_solr_entry")
       send("after_commit_on_destroy", "destroy_solr_entry")
       
       send("attr_accessible", "need_solr_update") 
@@ -40,8 +43,10 @@ module IndexOnSolr
     end 
     
     module InstanceMethods
-     
-      def trigger_create_or_update_entry?(options = {})
+      
+      def create_or_update_entry?(destroy = false)
+        options = self.solr_conditions
+        
         if options[:if].nil?
           if_condition = true
         elsif options[:if].is_a?(Proc)
@@ -57,25 +62,29 @@ module IndexOnSolr
         else
           unless_condition = self.send(options[:unless].to_s)
         end
-        
-        if if_condition && !unless_condition
+           
+        if if_condition && !unless_condition && (self.solr_use_live_field ? self.live? : true) && self.need_solr_update
           return true
         else
-          self.destroy_solr_entry
+          self.destroy_solr_entry if destroy
           return false
         end
       end
     
-      def create_solr_entry      
-        SOLR_LOG.info "#{Time.now} - Create Solr Entry #{self.id} for model #{self.class.to_s}"   
-        conn = self.class.solr_connection
-        conn.add(self.solr_entry_fields)
+      def create_solr_entry
+        if self.create_or_update_entry?
+          SOLR_LOG.info "#{Time.now} - Create Solr Entry #{self.id} for model #{self.class.to_s}"   
+          conn = self.class.solr_connection
+          conn.add(self.solr_entry_fields)
+        end
       end
     
       def update_solr_entry(options = {})      
         options[:force] ||= false
         
-        if self.need_solr_update || options[:force]
+        self.need_solr_update = true if options[:force]
+        
+        if self.create_or_update_entry?(true)
           SOLR_LOG.info "#{Time.now} - Update Solr Entry #{self.id} for model #{self.class.to_s}"   
           conn = self.class.solr_connection
           conn.update(self.solr_entry_fields)
