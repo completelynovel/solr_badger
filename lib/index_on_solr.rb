@@ -105,6 +105,8 @@ module IndexOnSolr
       end
       
       def has_fields_been_updated
+        return unless self.need_solr_update.nil?
+        
         self.need_solr_update = true and return unless self.solr_update_on_change.present?
         
         solr_update_on_change.each do |option|
