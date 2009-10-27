@@ -72,6 +72,8 @@ module IndexOnSolr
       end
     
       def create_solr_entry
+        self.need_solr_update = true
+        
         if self.create_or_update_entry?
           SOLR_LOG.info "#{Time.now} - Create Solr Entry #{self.id} for model #{self.class.to_s}"   
           conn = self.class.solr_connection
