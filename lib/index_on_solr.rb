@@ -44,7 +44,7 @@ module IndexOnSolr
     
     module InstanceMethods
       
-      def create_or_update_entry?(destroy = false)
+      def create_or_update_entry?
         options = self.solr_conditions
         
         if options[:if].nil?
@@ -62,11 +62,15 @@ module IndexOnSolr
         else
           unless_condition = self.send(options[:unless].to_s)
         end
-           
-        if if_condition && !unless_condition && (self.solr_use_live_field ? self.live.to_s.match(/(true|1)$/i).present? : true) && self.need_solr_update
-          return true
+        
+        if if_condition && !unless_condition && (self.solr_use_live_field ? self.live.to_s.match(/(true|1)$/i).present? : true) 
+          if self.need_solr_update
+            return true
+          else
+            return false
+          end
         else
-          self.destroy_solr_entry if destroy
+          self.destroy_solr_entry
           return false
         end
       end
@@ -86,7 +90,7 @@ module IndexOnSolr
         
         self.need_solr_update = true if options[:force]
         
-        if self.create_or_update_entry?(true)
+        if self.create_or_update_entry?
           SOLR_LOG.info "#{Time.now} - Update Solr Entry #{self.id} for model #{self.class.to_s}"   
           conn = self.class.solr_connection
           conn.update(self.solr_entry_fields)
