@@ -183,6 +183,7 @@ module SolrToolbox
       SOLR_LOG.info "#{Time.now} - Update Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
+        sleep(50)
         group.each do |entry|
           SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.update_solr_entry(:force => true)
@@ -196,6 +197,7 @@ module SolrToolbox
       SOLR_LOG.info "#{Time.now} - Create Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
+        sleep(50)
         group.each do |entry|
           SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.create_solr_entry
