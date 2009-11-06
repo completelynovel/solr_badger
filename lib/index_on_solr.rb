@@ -127,6 +127,8 @@ module IndexOnSolr
         solr_update_on_change.each do |option|
           self.need_solr_update = true if self.send("#{option.to_s}_changed?")
         end
+        
+        self.need_solr_update = true if solr_update_on_change.include?(:updated_at) && self.send("changed?")
       end
       
       def destroy_solr_entry
