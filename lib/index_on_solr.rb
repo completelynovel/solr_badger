@@ -158,17 +158,21 @@ module IndexOnSolr
         options[:extra_url]  += self.solr_use_live_field? ? "&fq=live_b:true" : ""
         options[:model]       = self.to_s
         options[:core]        = [self.solr_core]
-        options[:return]    ||= [:results]
+        options[:return]    ||= options[:return].is_a?(Array) ? options[:return].push(:results) : options[:return] = [:results]
+        options               = self.facets_options_for_solr_search(options) if options[:return].include?(:facets)
         
         SolrToolbox::Search.query(query, options)
       end
 
       def solr_facets(options = {})
-        options[:return]       = [:facets]
+        self.solr_search("", self.facets_options_for_solr_search(options))[:facets]
+      end
+      
+      def facets_options_for_solr_search(options = {})
+        options[:return]       = options[:return].is_a?(Array) ? options[:return].push(:facets) : options[:return] = [:facets]
         options[:facet_query]  = self.solr_facet_query  || []
         options[:facet_fields] = self.solr_facet_fields || []
-        
-        self.solr_search("", options)[:facets]
+        options
       end
     
       def solr_pagination(query, options = {})

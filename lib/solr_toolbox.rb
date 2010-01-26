@@ -26,7 +26,7 @@ module SolrToolbox
       options[:extra_url]     ||= ""
       options[:fl]            ||= "id" # We only need the id field
       options[:dismax]        ||= false
-      options[:return]        ||= []
+      options[:return]        ||= [] # :results, :facets, :json, :req
       options[:facets_query]  ||= []
       options[:facets_fields] ||= []
       options[:model]         ||= ""
