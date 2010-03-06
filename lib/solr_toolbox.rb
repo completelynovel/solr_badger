@@ -183,7 +183,7 @@ module SolrToolbox
       SOLR_LOG.info "#{Time.now} - Update Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
-        sleep(50)
+        sleep(4)
         group.each do |entry|
           SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.update_solr_entry(:force => true)
@@ -197,7 +197,7 @@ module SolrToolbox
       SOLR_LOG.info "#{Time.now} - Create Solr index for the #{model.to_s} model..."
       
       model.find_in_batches(options) do |group|
-        sleep(50)
+        sleep(4)
         group.each do |entry|
           SOLR_LOG.info "Entry #{entry.id.to_s}..." if entry.id % 100 == 0
           entry.create_solr_entry
@@ -221,6 +221,12 @@ module SolrToolbox
       end
 
       useless_ids
+    end
+    
+    def self.destroy_model(model, options = {})
+      # SolrToolbox::Tools.destroy_model(Person, :core => :others)
+      conn = SolrToolbox::Tools.connection(options)
+      conn.delete("model:#{model.to_s}")
     end
     
     def self.search_sentence(query, will_paginate_collection)

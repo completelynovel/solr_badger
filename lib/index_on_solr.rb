@@ -180,6 +180,7 @@ module IndexOnSolr
       end
     
       def rebuild_solr_index(options = {})
+        SolrToolbox::Tools.destroy_model(self.to_s, :core => self.solr_core)
         SolrToolbox::Tools.create_solr_index(self, options = {})
       end
       
@@ -192,7 +193,9 @@ module IndexOnSolr
       end
       
       def verify_solr_index_integrity(options = {})
-        options[:fix] = true unless options[:fix].present?
+        options[:core] = self.solr_core unless options[:core].present?
+        options[:fix]  = true           unless options[:fix].present?
+        
         SolrToolbox::Tools.verify_solr_index_integrity(self, options = {})
       end
       
