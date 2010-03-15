@@ -89,9 +89,15 @@ module SolrToolbox
       # Log search
       SOLR_LOG.info "#{Time.now} - Solr Search, time : #{json["responseHeader"]["QTime"]}, url : #{url}"
       
-      # Get the informations out of the JSON fetched by solr 
-      solr_ids = json["response"]["docs"].to_hash.collect{|doc| doc[1]["id"]}
-      ids      = solr_ids.collect { |id| id.split(":")[1] }
+      # Get the informations out of the JSON fetched by solr
+      docs     = json["response"]["docs"].to_hash
+      solr_ids = []
+      ids      = []
+      
+      0.upto(docs.size - 1).each do |i|
+        solr_ids.push(docs[i]["id"])
+        ids.push(docs[i]["id"].split(":")[1])
+      end
       
       # Return list of ids and results founds 
       search = { 
