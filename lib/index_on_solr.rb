@@ -181,22 +181,22 @@ module IndexOnSolr
     
       def rebuild_solr_index(options = {})
         SolrToolbox::Tools.destroy_model(self.to_s, :core => self.solr_core)
-        SolrToolbox::Tools.create_solr_index(self, options = {})
+        SolrToolbox::Tools.create_solr_index(self, options)
       end
       
       def create_solr_index(options = {})
-        SolrToolbox::Tools.create_solr_index(self, options = {})
+        SolrToolbox::Tools.create_solr_index(self, options)
       end
       
       def update_solr_index(options = {})
-        SolrToolbox::Tools.update_solr_index(self, options = {})
+        SolrToolbox::Tools.update_solr_index(self, options)
       end
       
       def verify_solr_index_integrity(options = {})
         options[:core] = self.solr_core unless options[:core].present?
         options[:fix]  = true           unless options[:fix].present?
         
-        SolrToolbox::Tools.verify_solr_index_integrity(self, options = {})
+        SolrToolbox::Tools.verify_solr_index_integrity(self, options)
       end
       
     end
