@@ -63,7 +63,7 @@ module IndexOnSolr
           unless_condition = self.send(options[:unless].to_s)
         end
         
-        if if_condition && !unless_condition && (self.solr_use_live_field ? self.live.to_s.match(/(true|1)$/i).present? : true) 
+        if if_condition && !unless_condition && (self.solr_use_live_field ? self.live.to_s.match(/^(true|1)$/i).present? : true) 
           if self.need_solr_update
             return true
           else
@@ -108,7 +108,7 @@ module IndexOnSolr
           :model => self.class.to_s
         }
       
-        default_fields[:live_b] = self.live.to_s.match(/(true|1)$/i).present? if self.class.solr_use_live_field?
+        default_fields[:live_b] = self.live.to_s.match(/^(true|1)$/i).present? if self.class.solr_use_live_field?
       
         if self.class.solr_options.present?
           self.class.solr_options.each do |field, value|
