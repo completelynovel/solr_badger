@@ -249,12 +249,12 @@ module SolrToolbox
           "Results",
           "#{first_result.to_s}-#{last_result.to_s}",
           "of",
-          "<strong>#{found.to_s}</strong>",
+          "#{found.to_s}",
           "for the term",
-          "<strong>#{query}</strong>"
+          "#{query}"
         ].join(" ")
       else
-        "We did not find any results for <strong>#{query}</strong>"
+        "We did not find any results for #{query}"
       end
     end
     
