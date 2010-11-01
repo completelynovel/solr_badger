@@ -31,9 +31,9 @@ module IndexOnSolr
       
       send("before_update", "has_fields_been_updated") 
       
-      send("after_commit_on_create", "create_solr_entry")
-      send("after_commit_on_update", "update_solr_entry")
-      send("after_commit_on_destroy", "destroy_solr_entry")
+      send("after_commit", "create_solr_entry", :on => :create)
+      send("after_commit", "update_solr_entry", :on => :update)
+      send("after_commit", "destroy_solr_entry", :on => :destroy)
       
       send("attr_accessible", "need_solr_update") 
       send("attr_accessor", "need_solr_update") 
