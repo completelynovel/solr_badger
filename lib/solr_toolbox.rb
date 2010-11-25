@@ -90,7 +90,7 @@ module SolrToolbox
       SOLR_LOG.info "#{Time.now} - Solr Search, time : #{json["responseHeader"]["QTime"]}, url : #{url}"
       
       # Get the informations out of the JSON fetched by solr
-      docs     = json["response"]["docs"].to_hash
+      docs     = to_hash(json["response"]["docs"])
       solr_ids = []
       ids      = []
       
@@ -134,6 +134,14 @@ module SolrToolbox
     def self.paginate(search)
       WillPaginate::Collection.create(search[:page], search[:per_page], search[:found]) do |pager|
         pager.replace search[:results]
+      end
+    end
+    
+
+    def self.to_hash(array)
+      array.inject({}) do |hash, item|
+        hash[hash.size] = item
+        hash
       end
     end
   end
